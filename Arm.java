@@ -215,6 +215,31 @@ public class Arm {
         //UI.printf("theta1:%3.1f, theta2:%3.1f\n",theta1*180/Math.PI,theta2*180/Math.PI);
         return;
     }
+    
+    public void convert_path_xy_to_ang(String fname){
+        
+        try {
+            //Whatever the file path is.
+            File statText = new File(fname);
+            Scanner scan = new Scanner(fname);
+            FileOutputStream is = new FileOutputStream(statText);
+            OutputStreamWriter osw = new OutputStreamWriter(is);    
+            Writer w = new BufferedWriter(osw);
+            String str_out;
+            while (scan.hasNext()){
+                double x = scan.next();
+                double y = scan.next();
+                double pen = scan.next();
+                inverseKinematic(x, y);
+                str_out = String.format("%3.1f,%3.1f\n",
+                    get_theata1(),get_theata2);
+                w.write(str_out);
+            }
+            w.close();
+        } catch (IOException e) {
+            UI.println("Problem writing to the file statsTest.txt");
+        }
+    }
 
     // returns angle of motor 1
     public double get_theta1(){
