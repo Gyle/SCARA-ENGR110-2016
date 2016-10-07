@@ -7,8 +7,28 @@
  */
 
 import ecs100.UI;
+import ecs100.UIFileChooser;
+
 import java.awt.Color;
 import java.util.*;
+import java.io.*;
+import java.awt.*;
+
+import ecs100.UI;
+import java.util.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.FileReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+
+import java.awt.Color;
 
 public class Arm {
     // fixed arm parameters
@@ -216,6 +236,50 @@ public class Arm {
         return;
     }
 
+    public void convert_path_xy_to_pwm(String fname){
+        try {
+            //Whatever the file path is.
+            int nSteps = 5; //45 for line and sq or 2 to turn off
+            String toSave = UIFileChooser.save();//name file to save
+            File statText = new File(toSave);
+            Scanner scan = new Scanner(new File(fname));//line that scans
+            FileOutputStream is = new FileOutputStream(statText);
+            OutputStreamWriter osw = new OutputStreamWriter(is);    
+            Writer w = new BufferedWriter(osw);
+            String str_out;
+
+            ArrayList<Double> X = new ArrayList<Double>();
+            ArrayList<Double> Y = new ArrayList<Double>();
+            ArrayList<Integer> P = new ArrayList<Integer>();
+
+            while(scan.hasNext()){
+                //UI.println(scan.next());
+                //UI.println(scan.next());
+                X.add(scan.nextDouble());
+                Y.add(scan.nextDouble());
+                P.add((int)scan.nextDouble());
+            }
+            for(int i = 0; i < X.size()-1; i++){
+                double x0 = X.get(i);
+                double x1 = X.get(i+1);
+                double y0 = Y.get(i);
+                double y1 = Y.get(i+1);
+
+                for(int j = 0; j < nSteps; j++){
+                    double x = x0 + j*(x1 - x0)/nSteps;
+                    double y = y0 + j*(y1 - y0)/nSteps;
+                    inverseKinematic(x, y);
+                    //str_out = (""+x+"x "+y+"y "+ pen+"\n");
+                    str_out = (get_pwm1()+","+get_pwm2()+","+ P.get(i)+"000\r\n"); // was pen but now 2000
+                    w.write(str_out);
+                }
+            }
+            w.close();
+        } catch (IOException e) {
+            UI.println("Problem writing to the file statsTest.txt");
+        }
+    }
+
     // returns angle of motor 1
     public double get_theta1(){
         return theta1;
@@ -235,13 +299,15 @@ public class Arm {
     // linear intepolation
     public int get_pwm1(){
         int pwm = 0;
-        pwm = (int)(-10*theta1 + 290);
+        double theta = -1*(theta1*(180/Math.PI));
+        pwm = (int)(10*(theta) + 290);
         return pwm;
     }
     // ditto for motor 2
     public int get_pwm2(){
         int pwm =0;
-        pwm =(int)( -10*theta2 + 850);
+        double theta = -1*(theta2*(180/Math.PI));
+        pwm =(int)( 10*(theta) + 850);
         //pwm = (int)(pwm2_90 + (theta2 - 90)*pwm2_slope);
         return pwm;
     }
